@@ -144,7 +144,7 @@ def cutHist(img,nSlice,nColum) :
     
     plt.tight_layout
     plt.show()
-    
+
 def getLargest(l,nZones) :
         
     if len(l) <= nZones :
@@ -182,52 +182,59 @@ def extractZones(l) :
 
 def getRmMatrix(img) :
     
-    matX = np.asarray([[False for k in range(len(img))] for k in range(len(img))])
-    for nRow in range(len(img)) :
-        zonesX = getZones(img,nRow,"row")
-        if len(zonesX) == 0 : pass
-        elif len(zonesX) == 1 : 
-            for ind in zonesX[0] : matX[nRow][ind] = True
-        elif len(zonesX) == 2 : 
-            for zone in zonesX : 
-                for ind in zone : matX[nRow][ind] = True
-        else :
-            zonesX = getLargest(zonesX,3)
-            for zone in zonesX : 
-                for ind in zone : matX[nRow][ind] = True
-                    
-    matY = np.asarray([[False for k in range(len(img))] for k in range(len(img))])
+    mat = np.matrix([[1 for k in range(len(img))] for k in range(len(img))])
+    
+    img = getLaplacianImage(img)
+    
     for nCol in range(len(img)) :
-        zonesY = getZones(img,nCol,"col")
-        if len(zonesY) == 0 : pass
-        elif len(zonesY) == 1 : 
-            for ind in zonesY[0] : matY[:,nCol][ind] = True
-        elif len(zonesY) == 2 : 
-            for zone in zonesY : 
-                for ind in zone : matY[:,nCol][ind] = True
+        zones = getZones(img,nCol,"col")
+        if len(zones) == 0 : pass
+        elif len(zones) == 1 : 
+            for ind in zones[0] : mat[ind,nCol] = 0
+        elif len(zones) == 2 : 
+            for zone in zones : 
+                for ind in zone : mat[ind,nCol] = 0                  
         else :
-            zonesY = getLargest(zonesY,3)
-            for zone in zonesY : 
-                for ind in zone : matY[:,nCol][ind] = True
-        
-    mat = np.asarray([[False for k in range(len(img))] for k in range(len(img))])
-    for i,j in enumerate(range(len(img))) :
-        mat[i][j] = matX[i][j] or matY[i][j]
+            zones = getLargest(zones,2)
+            for zone in zones : 
+                for ind in zone : mat[ind,nCol] = 0
+                    
+    for nRow in range(len(img)) :
+        zones = getZones(img,nRow,"row")
+        if len(zones) == 0 : pass
+        elif len(zones) == 1 : 
+            for ind in zones[0] : mat[nRow,ind] = 0
+        elif len(zones) == 2 : 
+            for zone in zones : 
+                for ind in zone : mat[nRow,ind] = 0
+        else :
+            zones = getLargest(zones,3)
+            for zone in zones : 
+                for ind in zone : mat[nRow,ind] = 0
     
     binar = np.vectorize(binarize)
     
-    return binar(mat)
+    for nRow in range(len(img)-int(len(img)/4),len(img)) :
+        mat[nRow,:] = 0
+    
+    return np.asarray(binar(mat))*img
 
-def clearFrame(img,down,up) :
+def observeExtraction(img) :
     
-    thresh = np.vectorize(tresh)    
-    lImage = thresh(img,down,up)
-    g2 = threshold_otsu(lImage)
-    lImage = lImage > g2
+    plt.figure(figsize=(12,8))
     
-    pic = getRmMatrix(lImage)
+    plt.subplot(2,3,1)
+    plt.imshow(img,cmap=plt.cm.magma)
+    plt.subplot(2,3,2)
+    plt.imshow(getLaplacianImage(img),cmap="Greys")
+    plt.subplot(2,3,3)
+    plt.imshow(getRmMatrix(img),cmap="Greys")
+    plt.subplot(2,3,4)
+    plt.imshow(img,cmap=plt.cm.bone)
+    plt.subplot(2,3,5)
+    plt.imshow(getSobolImage(img),cmap="Greys")
+    plt.subplot(2,3,6)
+    plt.imshow(getRmMatrix(img)*img,cmap=plt.cm.magma)
     
-    for nSlice in range(380,len(lImage)) :
-        pic[nSlice] = [0 for k in range(len(lImage[nSlice]))]
-        
-    return pic 
+    plt.tight_layout
+    plt.show()
