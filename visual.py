@@ -6,6 +6,7 @@ Created on Fri Jan 13 16:34:51 2017
 """
 
 import dicom
+import copy
 import os
 import cv2
 import numpy as np
@@ -54,7 +55,7 @@ def displayScan(patient,slices,colormap) :
     
     image = getImages(patient)
     
-    plt.figure(figsize=(12,len(slices)*4))
+    plt.figure(figsize=(18,len(slices)*4))
     
     for i,nSlice in enumerate(slices) :
         plt.subplot(len(slices),2,2*i+1)
@@ -98,54 +99,54 @@ def getLaplacianImage(img) :
     binar = np.vectorize(binarize)
     thresh = np.vectorize(tresh)
     
-    lImage = thresh(img,-1200,-800)
+    lImage = thresh(img, -1200, -800)
     g2 = threshold_otsu(lImage)
     lImage = lImage > g2
     lImage = binar(lImage)
     
     return lImage
 
-def cutHist(img,nSlice,nColum) :
+def cutHist(img, nSlice, nColum) :
     
     thresh = np.vectorize(tresh)
     
     sImage = getSobolImage(img)
     lImage = getLaplacianImage(img)
     
-    plt.figure(figsize=(12,6))
+    plt.figure(figsize=(18,6))
     
     plt.subplot(2,3,1)
     plt.xlim([-10,522])
-    plt.bar(range(len(sImage[nSlice])),list(sImage[nSlice]),width=0.1)
+    plt.bar(range(len(sImage[nSlice])), list(sImage[nSlice]), width=0.1)
     
     plt.subplot(2,3,3)
     plt.xlim([-10,522])
-    plt.bar(range(len(sImage[:,nColum])),list(sImage[:,nColum]),width=0.1)
+    plt.bar(range(len(sImage[:,nColum])), list(sImage[:,nColum]), width=0.1)
     
     plt.subplot(2,3,2)
-    sFake = sImage
+    sFake = copy.copy(sImage)
     sFake[nSlice] = 1
     sFake[:,nColum] = 1
-    plt.imshow(sFake,cmap="Greys")
+    plt.imshow(sFake, cmap="Greys")
     
     plt.subplot(2,3,4)
     plt.xlim([-10,522])
-    plt.bar(range(len(lImage[nSlice])),list(lImage[nSlice]),width=0.1)
+    plt.bar(range(len(lImage[nSlice])), list(lImage[nSlice]), width=0.1)
     
     plt.subplot(2,3,6)
     plt.xlim([-10,522])
-    plt.bar(range(len(lImage[:,nColum])),list(lImage[:,nColum]),width=0.1)
+    plt.bar(range(len(lImage[:,nColum])), list(lImage[:,nColum]), width=0.1)
     
     plt.subplot(2,3,5)
-    lFake = lImage
+    lFake = copy.copy(lImage)
     lFake[nSlice] = 1
     lFake[:,nColum] = 1
-    plt.imshow(lFake,cmap="Greys")
+    plt.imshow(lFake, cmap="Greys")
     
     plt.tight_layout
     plt.show()
 
-def getLargest(l,nZones) :
+def getLargest(l, nZones) :
         
     if len(l) <= nZones :
         return l
@@ -155,26 +156,28 @@ def getLargest(l,nZones) :
     
     return list(np.asarray(l)[w[-nZones:]])
 
-def getZones(img,ind,typ) :
+def getZones(img, ind, typ, direction) :
     
     if typ == "row" :
-        return extractZones(img[ind])
+        return extractZones(img[ind], direction)
     elif typ == "col" :
-        return extractZones(img[:,ind])
+        return extractZones(img[:, ind], direction)
     else :
-        print("|-> Wrong type !")
-        
-def extractZones(l) :
+        print("|-> Wrong type !")  
+    
+def extractZones(l, direction) :
     
     zones = []
     u = []
     
-    for i,v in enumerate(l) :
-        if v == 1 :
+    for i,v in enumerate(l[::direction]) :
+        if v == 1 and direction == 1 :
             u.append(i)
+        elif v == 1 and direction == -1 :
+            u.append(len(l)-(i+1))
         else :
             if len(u) == 0 : pass
-            else : 
+            else :
                 zones.append(u)
                 u = []
 
@@ -187,41 +190,42 @@ def getRmMatrix(img) :
     img = getLaplacianImage(img)
     
     for nCol in range(len(img)) :
-        zones = getZones(img,nCol,"col")
-        if len(zones) == 0 : pass
-        elif len(zones) == 1 : 
-            for ind in zones[0] : mat[ind,nCol] = 0
-        elif len(zones) == 2 : 
-            for zone in zones : 
-                for ind in zone : mat[ind,nCol] = 0                  
-        else :
-            zones = getLargest(zones,2)
-            for zone in zones : 
-                for ind in zone : mat[ind,nCol] = 0
+        zonesForw = getZones(img, nCol, 'col', 1)
+        zonesBack = getZones(img, nCol, 'col', -1)
+        for zones in [zonesForw, zonesBack] :
+            if len(zones) == 0 : pass
+            elif len(zones) == 1 : 
+                for ind in zones[0] : mat[ind, nCol] = 0
+            elif len(zones) == 2 : 
+                for zone in zones : 
+                    for ind in zone : mat[ind, nCol] = 0                  
+            else :
+                zones = getLargest(zones, 2)
+                for zone in zones : 
+                    for ind in zone : mat[ind, nCol] = 0
                     
     for nRow in range(len(img)) :
-        zones = getZones(img,nRow,"row")
-        if len(zones) == 0 : pass
-        elif len(zones) == 1 : 
-            for ind in zones[0] : mat[nRow,ind] = 0
-        elif len(zones) == 2 : 
-            for zone in zones : 
-                for ind in zone : mat[nRow,ind] = 0
-        else :
-            zones = getLargest(zones,3)
-            for zone in zones : 
-                for ind in zone : mat[nRow,ind] = 0
+        zonesForw = getZones(img, nRow, 'row', 1)
+        zonesBack = getZones(img, nRow, 'row', -1)
+        for zones in [zonesForw, zonesBack] :
+            if len(zones) == 0 : pass
+            elif len(zones) == 1 : 
+                for ind in zones[0] : mat[nRow, ind] = 0
+            elif len(zones) == 2 : 
+                for zone in zones : 
+                    for ind in zone : mat[nRow, ind] = 0
+            else :
+                zones = getLargest(zones, 3)
+                for zone in zones : 
+                    for ind in zone : mat[nRow, ind] = 0
     
     binar = np.vectorize(binarize)
-    
-    for nRow in range(len(img)-int(len(img)/4),len(img)) :
-        mat[nRow,:] = 0
     
     return np.asarray(binar(mat))*img
 
 def observeExtraction(img) :
     
-    plt.figure(figsize=(12,8))
+    plt.figure(figsize=(18,8))
     
     plt.subplot(2,3,1)
     plt.imshow(img,cmap=plt.cm.magma)
@@ -238,3 +242,61 @@ def observeExtraction(img) :
     
     plt.tight_layout
     plt.show()
+    
+def extractAverageLungZone(l):
+    
+    zone = []
+    zones = []
+    
+    for i, e in enumerate(l) :
+        if e == 0 : 
+            if len(zone) == 0 :
+                pass
+            else : 
+                zones.append(zone)
+                zone = []
+        else :
+            zone.append(i)
+            
+    return getLargest(zones, 1)
+
+def clearOutsiders(img, graph):
+    
+    im = getRmMatrix(img)
+    hi = np.zeros(len(im))
+    
+    for col in range(len(img)) :
+        hi += im[:, col]
+        
+    def movingAverage(interval, size):
+        wi = np.ones(int(size))/float(size)
+        return np.convolve(interval, wi, 'same')
+    
+    hi = movingAverage(hi, 20)
+    mx = max(hi)/6
+    
+    def thresh(x):
+        if x < mx : return 0
+        else : return x
+        
+    th = np.vectorize(thresh)
+    hi = th(hi)
+    
+    lungs = extractAverageLungZone(hi)[0]
+    clear = copy.copy(im)
+    
+    for col in range(len(img)) :
+        for i in range(len(img)) :
+            if i not in lungs :
+                clear[:, col][i] = 0       
+    
+    if graph :
+        plt.figure(figsize=(18,6))
+        plt.subplot(1, 3, 1)
+        plt.imshow(im*img, cmap='Greys')
+        plt.subplot(1, 3, 2)
+        plt.plot(hi, color='orange')
+        plt.subplot(1, 3, 3)
+        plt.imshow(clear*img, cmap='Greys')
+    
+    return clear
