@@ -30,7 +30,7 @@ def resample(image, scan, new_spacing=[1,1,1]) :
     
     return image
 
-def plot3D(patient,threshold=400) :
+def plot3D(patient, threshold=400) :
     
     image = resample(getImages(patient),loadScans(patient))
     
@@ -58,7 +58,7 @@ def getBinary(patient) :
     
     for nSlice in range(len(image)) :
         try :
-            image[nSlice] = getRmMatrix(image[nSlice])*image[nSlice]
+            image[nSlice] = clearOutsiders(image[nSlice], False)*image[nSlice]
         except :
             print("|-> Problematic slice : {}".format(nSlice))
             image[nSlice] = np.asarray([[0 for k in range(len(image[nSlice]))] for k in range(len(image[nSlice]))])
@@ -67,21 +67,22 @@ def getBinary(patient) :
 
 def comparePatients3D(patient1,patient2) :
     
-    im1 = np.abs(getBinary(patient1))
+    im1 = np.load('./preprocessed/{}.npy'.format(patient1))
     p1 = im1.transpose(2,1,0)[:,:,::-1]
     verts1, faces1 = measure.marching_cubes(p1, 0)
     print('|-> Ended marching cubes algorithm of patient {}'.format(patient1))
-    im2 = np.abs(getBinary(patient2))
+    
+    im2 = np.load('./preprocessed/{}.npy'.format(patient2))
     p2 = im2.transpose(2,1,0)[:,:,::-1]
     verts2, faces2 = measure.marching_cubes(p2, 0)
     print('|-> Ended marching cubes algorithm of patient {}'.format(patient2))
     
-    fig = plt.figure(figsize=(12, 6))
-    alpha = 0.001
+    fig = plt.figure(figsize=(18, 6))
+    alpha = 0.005
     
     ax1 = fig.add_subplot(121, projection='3d')
     mesh1 = Poly3DCollection(verts1[faces1], alpha=alpha)
-    mesh1.set_facecolor((0.2, 0.2, 0.2, alpha))
+    mesh1.set_facecolor((0.1, 0.1, 0.1, alpha))
     ax1.add_collection3d(mesh1)
     ax1.set_xlim(0, p1.shape[0])
     ax1.set_ylim(0, p1.shape[1])
@@ -89,7 +90,7 @@ def comparePatients3D(patient1,patient2) :
     
     ax2 = fig.add_subplot(122, projection='3d')
     mesh2 = Poly3DCollection(verts2[faces2], alpha=alpha)
-    mesh2.set_facecolor((0.2, 0.2, 0.2, alpha))
+    mesh2.set_facecolor((0.1, 0.1, 0.1, alpha))
     ax2.add_collection3d(mesh2)
     ax2.set_xlim(0, p2.shape[0])
     ax2.set_ylim(0, p2.shape[1])
@@ -99,7 +100,7 @@ def comparePatients3D(patient1,patient2) :
  
 def binaryPlot3D(patient) :
     
-    image = np.abs(getBinary(patient))
+    image = np.load('./preprocessed/{}.npy'.format(patient))
     
     p = image.transpose(2,1,0)
     p = p[:,:,::-1]
@@ -109,7 +110,7 @@ def binaryPlot3D(patient) :
 
     fig = plt.figure(figsize=(8, 8))
     ax = fig.add_subplot(111, projection='3d')
-    alpha = 0.001
+    alpha = 0.005
     # Alpha on the mesh will put edges transparent
     mesh = Poly3DCollection(verts[faces], alpha=alpha)
     # Alpha on the facecolor will turn the faces transparent
