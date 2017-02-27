@@ -15,7 +15,6 @@ import imutils
 import skimage.morphology as morph
 
 from skimage.filters import threshold_otsu
-from skimage.restoration import inpaint
 from scipy import ndimage
 
 def loadScans(patient) :
@@ -113,7 +112,7 @@ def cutHist(img, nSlice, nColum) :
     sImage = getSobolImage(img)
     lImage = getLaplacianImage(img)
     
-    plt.figure(figsize=(18,6))
+    plt.figure(figsize=(18,8))
     
     plt.subplot(2,3,1)
     plt.xlim([-10,522])
@@ -225,20 +224,20 @@ def getRmMatrix(img) :
 
 def observeExtraction(img) :
     
-    plt.figure(figsize=(18,8))
+    plt.figure(figsize=(18,10))
     
     plt.subplot(2,3,1)
-    plt.imshow(img,cmap=plt.cm.magma)
-    plt.subplot(2,3,2)
-    plt.imshow(getLaplacianImage(img),cmap="Greys")
-    plt.subplot(2,3,3)
-    plt.imshow(getRmMatrix(img),cmap="Greys")
-    plt.subplot(2,3,4)
     plt.imshow(img,cmap=plt.cm.bone)
+    plt.subplot(2,3,2)
+    plt.imshow(getLaplacianImage(img), cmap='Greys')
+    plt.subplot(2,3,3)
+    plt.imshow(getSobolImage(img), cmap='Greys')
+    plt.subplot(2,3,4)
+    plt.imshow(getRmMatrix(img), cmap='Greys')
     plt.subplot(2,3,5)
-    plt.imshow(getSobolImage(img),cmap="Greys")
+    plt.imshow(getRmMatrix(img)*img, cmap=plt.cm.afmhot)
     plt.subplot(2,3,6)
-    plt.imshow(getRmMatrix(img)*img,cmap=plt.cm.magma)
+    plt.imshow(clearOutsiders(img, False)*img, cmap=plt.cm.afmhot)
     
     plt.tight_layout
     plt.show()
@@ -272,8 +271,8 @@ def clearOutsiders(img, graph):
         wi = np.ones(int(size))/float(size)
         return np.convolve(interval, wi, 'same')
     
-    hi = movingAverage(hi, 20)
-    mx = max(hi)/6
+    hi = movingAverage(hi, 30)
+    mx = 0.1*max(hi)
     
     def thresh(x):
         if x < mx : return 0
@@ -282,21 +281,25 @@ def clearOutsiders(img, graph):
     th = np.vectorize(thresh)
     hi = th(hi)
     
-    lungs = extractAverageLungZone(hi)[0]
-    clear = copy.copy(im)
-    
-    for col in range(len(img)) :
-        for i in range(len(img)) :
-            if i not in lungs :
-                clear[:, col][i] = 0       
-    
-    if graph :
-        plt.figure(figsize=(18,6))
-        plt.subplot(1, 3, 1)
-        plt.imshow(im*img, cmap='Greys')
-        plt.subplot(1, 3, 2)
-        plt.plot(hi, color='orange')
-        plt.subplot(1, 3, 3)
-        plt.imshow(clear*img, cmap='Greys')
-    
-    return clear
+    lungs = extractAverageLungZone(hi)
+    if len(lungs) == 0 :
+        return np.asarray([[0 for k in range(len(im))] for k in range(len(im))])
+    else :
+        lungs = lungs[0]
+        clear = copy.copy(im)
+
+        for col in range(len(img)) :
+            for i in range(len(img)) :
+                if i not in lungs :
+                    clear[:, col][i] = 0       
+
+        if graph :
+            plt.figure(figsize=(18,6))
+            plt.subplot(1, 3, 1)
+            plt.imshow(im*img, cmap='Greys')
+            plt.subplot(1, 3, 2)
+            plt.plot(hi, color='orange')
+            plt.subplot(1, 3, 3)
+            plt.imshow(clear*img, cmap='Greys')
+
+        return clear
