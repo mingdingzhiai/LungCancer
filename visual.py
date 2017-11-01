@@ -2,14 +2,15 @@
 """
 Created on Fri Jan 13 16:34:51 2017
 
-@author: Deus ExMachina
+@author: Dindin Meryll
 """
 
 from imports import *
 
+# Defines a way to load the scans relative to a patient
 def loadScans(patient) :
     
-    slices = [dicom.read_file('./input/sample_images/{}/{}'.format(patient,s)) for s in os.listdir('./input/sample_images/{}'.format(patient))]
+    slices = [dicom.read_file('./Input/{}/{}'.format(patient,s)) for s in os.listdir('./Input/{}'.format(patient))]
     slices.sort(key = lambda x: int(x.InstanceNumber))
     try:
         slice_thickness = np.abs(slices[0].ImagePositionPatient[2] - slices[1].ImagePositionPatient[2])
@@ -21,6 +22,7 @@ def loadScans(patient) :
         
     return slices
 
+# Get the images relative to a patient, along the z axis
 def getImages(patient):
     
     scans = loadScans(patient)
@@ -40,61 +42,67 @@ def getImages(patient):
     
     return np.array(image, dtype=np.int16)
 
-def displayScan(patient,slices,colormap) :
+# Display function for each patient
+def displayScan(patient, slices, colormap) :
     
     image = getImages(patient)
     
     plt.figure(figsize=(18,len(slices)*4))
     
     for i,nSlice in enumerate(slices) :
-        plt.subplot(len(slices),2,2*i+1)
-        plt.imshow(cv2.resize(image[nSlice],(256,256)),cmap=colormap)
-        plt.subplot(len(slices),2,2*i+2)
-        plt.hist(image[nSlice].flatten(),bins=100,color='orange')
-        plt.xlim([-1000,1000])
+        plt.subplot(len(slices), 2, 2*i+1)
+        plt.imshow(cv2.resize(image[nSlice], (256,256)), cmap=colormap)
+        plt.subplot(len(slices), 2, 2*i+2)
+        plt.hist(image[nSlice].flatten(), bins=100, color='orange')
+        plt.xlim([-1000, 1000])
         plt.xlabel("Hounsfield Units (HU)")
         plt.ylabel("Frequency")
     
     plt.tight_layout
     plt.show
-    
-def tresh(x,down,up) :
-    if x < down or x > up :
-        return 0
-    else :
-        return x
-    
+
+# Thresholder tool
+def treshold(x, down, up) :
+
+    if x < down or x > up : return 0
+    else : return x
+
+# Binarizer tool 
 def binarize(x) :
+    
     if x == True : return 1
     else : return 0
-    
+
+# Defines the binarized sobol image out of a thresholded image
 def getSobolImage(img) :
     
     thresh = np.vectorize(tresh)
     binar = np.vectorize(binarize)
     
-    dx = ndimage.sobel(img-thresh(img,0,1200), 1) 
-    dy = ndimage.sobel(img-thresh(img,0,1200), 0)
-    sImage = np.hypot(dx,dy)  
+    dx = ndimage.sobel(img - threshold(img, 0, 1200), 1) 
+    dy = ndimage.sobel(img - threshold(img, 0, 1200), 0)
+    sImage = np.hypot(dx, dy)  
     sImage *= 255.0 / np.max(sImage) 
     g1 = threshold_otsu(sImage)
     sImage = sImage > g1
-    sImage = binar(sImage)
+    sImage = binarize(sImage)
     
     return sImage  
 
+# Defines the binarized laplacian image out of a thresholded image
 def getLaplacianImage(img) :
     
     binar = np.vectorize(binarize)
     thresh = np.vectorize(tresh)
     
-    lImage = thresh(img, -1200, -800)
+    lImage = threshold(img, -1200, -800)
     g2 = threshold_otsu(lImage)
     lImage = lImage > g2
-    lImage = binar(lImage)
+    lImage = binarize(lImage)
     
     return lImage
 
+# Observe both the obtained laplacian and sobol images
 def cutHist(img, nSlice, nColum) :
     
     thresh = np.vectorize(tresh)
@@ -135,43 +143,44 @@ def cutHist(img, nSlice, nColum) :
     plt.tight_layout
     plt.show()
 
+# Extracts the nZones largest zones out of a list
 def getLargest(l, nZones) :
         
-    if len(l) <= nZones :
-        return l
+    if len(l) <= nZones : return l
     else :
         v = [len(e) for e in l]
         w = list(np.argsort(v))
     
     return list(np.asarray(l)[w[-nZones:]])
 
-def getZones(img, ind, typ, direction) :
-    
-    if typ == "row" :
-        return extractZones(img[ind], direction)
-    elif typ == "col" :
-        return extractZones(img[:, ind], direction)
-    else :
-        print("|-> Wrong type !")  
-    
+# Extracts the zones according a given direction   
 def extractZones(l, direction) :
     
-    zones = []
+    zones, u = [], []
     u = []
     
-    for i,v in enumerate(l[::direction]) :
-        if v == 1 and direction == 1 :
-            u.append(i)
-        elif v == 1 and direction == -1 :
-            u.append(len(l)-(i+1))
+    for i, v in enumerate(l[::direction]) :
+        if v == 1 and direction == 1 : u.append(i)
+        elif v == 1 and direction == -1 : u.append(len(l)-(i+1))
         else :
             if len(u) == 0 : pass
             else :
                 zones.append(u)
                 u = []
 
+    # Memory efficiency
+    del u
+
     return zones
 
+# Extracts the largest zone according to a direction
+def getZones(img, ind, typ, direction) :
+    
+    if typ == "row" : return extractZones(img[ind], direction)
+    elif typ == "col" : return extractZones(img[:, ind], direction)
+    else : print("|-> Wrong type !")  
+
+# Defines the appropriate mask of pixel to remove
 def getRmMatrix(img) :
     
     mat = np.matrix([[1 for k in range(len(img))] for k in range(len(img))])
@@ -212,6 +221,7 @@ def getRmMatrix(img) :
     
     return np.asarray(binar(mat))*img
 
+# Display that same extraction
 def observeExtraction(img) :
     
     plt.figure(figsize=(18,10))
@@ -231,25 +241,24 @@ def observeExtraction(img) :
     
     plt.tight_layout
     plt.show()
-    
+
+# Extract zones according to average parameters
 def extractAverageLungZone(l):
     
-    zone = []
-    zones = []
-    
+    zone, zones = [], []
+
     for i, e in enumerate(l) :
         if e == 0 : 
-            if len(zone) == 0 :
-                pass
+            if len(zone) == 0 : pass
             else : 
                 zones.append(zone)
                 zone = []
-        else :
-            zone.append(i)
+        else : zone.append(i)
             
     return getLargest(zones, 1)
 
-def clearOutsiders(img, graph):
+# Clear the remaining outsiders
+def clearOutsiders(img, graph=False):
     
     im = getRmMatrix(img)
     hi = np.zeros(len(im))

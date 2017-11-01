@@ -2,11 +2,12 @@
 """
 Created on Fri Jan 13 16:34:51 2017
 
-@author: Deus ExMachina
+@author: Dindin Meryll
 """
 
 from visual import *
 
+# Readapt the pixel space for uniformed format
 def resample(image, scan, new_spacing=[1,1,1]) :
     
     spacing = map(float, ([scan[0].SliceThickness] + scan[0].PixelSpacing))
@@ -22,6 +23,7 @@ def resample(image, scan, new_spacing=[1,1,1]) :
     
     return image
 
+# Display the 3d recreated image
 def plot3D(patient, threshold=400) :
     
     image = resample(getImages(patient),loadScans(patient))
@@ -43,21 +45,22 @@ def plot3D(patient, threshold=400) :
     ax.set_zlim(0, p.shape[2])
 
     plt.show()
-    
+  
+# Binarize that same 3d object
 def getBinary(patient) :
     
-    image = resample(getImages(patient),loadScans(patient))
+    image = resample(getImages(patient), loadScans(patient))
     
     for nSlice in range(len(image)) :
-        try :
-            image[nSlice] = clearOutsiders(image[nSlice], False)*image[nSlice]
+        try : image[nSlice] = clearOutsiders(image[nSlice], False)*image[nSlice]
         except :
             print("|-> Problematic slice : {}".format(nSlice))
             image[nSlice] = np.asarray([[0 for k in range(len(image[nSlice]))] for k in range(len(image[nSlice]))])
         
     return image
 
-def comparePatients3D(patient1,patient2) :
+# Display as comparison between two patients
+def comparePatients3D(patient1, patient2) :
     
     im1 = np.load('./preprocessed/{}.npy'.format(patient1))
     p1 = im1.transpose(2,1,0)[:,:,::-1]
@@ -89,10 +92,11 @@ def comparePatients3D(patient1,patient2) :
     ax2.set_zlim(0, p2.shape[2])
     
     plt.show()
- 
+
+# Binary plot of 3d object
 def binaryPlot3D(patient) :
     
-    image = np.load('./preprocessed/{}.npy'.format(patient))
+    image = np.load('./Preprocessed/{}.npy'.format(patient))
     
     p = image.transpose(2,1,0)
     p = p[:,:,::-1]

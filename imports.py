@@ -2,7 +2,7 @@
 """
 Created on Tue Nov 01 16:34:51 2017
 
-@author: Deus ExMachina
+@author: Dindin Meryll
 """
 
 import dicom
