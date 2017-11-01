@@ -4,14 +4,6 @@ Created on Fri Jan 13 16:34:51 2017
 
 @author: Deus ExMachina
 """
-import numpy as np
-import scipy.ndimage
-import matplotlib.pyplot as plt
-
-from skimage.filters import threshold_otsu
-from scipy import ndimage
-from skimage import measure, morphology
-from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
 from visual import *
 

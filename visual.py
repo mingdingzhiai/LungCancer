@@ -5,17 +5,7 @@ Created on Fri Jan 13 16:34:51 2017
 @author: Deus ExMachina
 """
 
-import dicom
-import copy
-import os
-import cv2
-import numpy as np
-import matplotlib.pyplot as plt
-import imutils
-import skimage.morphology as morph
-
-from skimage.filters import threshold_otsu
-from scipy import ndimage
+from imports import *
 
 def loadScans(patient) :
     
