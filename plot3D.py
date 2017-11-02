@@ -26,7 +26,7 @@ def resample(image, scan, new_spacing=[1,1,1]) :
 # Display the 3d recreated image
 def plot3D(patient, threshold=400) :
     
-    image = resample(getImages(patient),loadScans(patient))
+    image = resample(getImages(patient), loadScans(patient))
     
     p = image.transpose(2,1,0)
     p = p[:,:,::-1]
@@ -59,49 +59,13 @@ def getBinary(patient) :
         
     return image
 
-# Display as comparison between two patients
-def comparePatients3D(patient1, patient2) :
-    
-    im1 = np.load('./preprocessed/{}.npy'.format(patient1))
-    p1 = im1.transpose(2,1,0)[:,:,::-1]
-    verts1, faces1 = measure.marching_cubes(p1, 0)
-    print('|-> Ended marching cubes algorithm of patient {}'.format(patient1))
-    
-    im2 = np.load('./preprocessed/{}.npy'.format(patient2))
-    p2 = im2.transpose(2,1,0)[:,:,::-1]
-    verts2, faces2 = measure.marching_cubes(p2, 0)
-    print('|-> Ended marching cubes algorithm of patient {}'.format(patient2))
-    
-    fig = plt.figure(figsize=(18, 6))
-    alpha = 0.005
-    
-    ax1 = fig.add_subplot(121, projection='3d')
-    mesh1 = Poly3DCollection(verts1[faces1], alpha=alpha)
-    mesh1.set_facecolor((0.1, 0.1, 0.1, alpha))
-    ax1.add_collection3d(mesh1)
-    ax1.set_xlim(0, p1.shape[0])
-    ax1.set_ylim(0, p1.shape[1])
-    ax1.set_zlim(0, p1.shape[2])
-    
-    ax2 = fig.add_subplot(122, projection='3d')
-    mesh2 = Poly3DCollection(verts2[faces2], alpha=alpha)
-    mesh2.set_facecolor((0.1, 0.1, 0.1, alpha))
-    ax2.add_collection3d(mesh2)
-    ax2.set_xlim(0, p2.shape[0])
-    ax2.set_ylim(0, p2.shape[1])
-    ax2.set_zlim(0, p2.shape[2])
-    
-    plt.show()
-
 # Binary plot of 3d object
-def binaryPlot3D(patient) :
-    
-    image = np.load('./Preprocessed/{}.npy'.format(patient))
+def binaryPlot3D(img) :
     
     p = image.transpose(2,1,0)
     p = p[:,:,::-1]
     
-    verts, faces = measure.marching_cubes(p, 0)
+    verts, faces = measure.marching_cubes(p, level=0)
     print('|-> Ended marching cubes algorithm of patient {}'.format(patient))
 
     fig = plt.figure(figsize=(8, 8))
