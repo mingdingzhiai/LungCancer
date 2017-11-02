@@ -66,7 +66,6 @@ def binaryPlot3D(img) :
     p = p[:,:,::-1]
     
     verts, faces, _, _ = measure.marching_cubes_lewiner(p, level=0)
-    print('|-> Ended marching cubes algorithm of patient {}'.format(patient))
 
     fig = plt.figure(figsize=(8, 8))
     ax = fig.add_subplot(111, projection='3d')
