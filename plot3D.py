@@ -65,7 +65,7 @@ def binaryPlot3D(img) :
     p = img.transpose(2,1,0)
     p = p[:,:,::-1]
     
-    verts, faces = measure.marching_cubes(p, level=0)
+    verts, faces, _, _ = measure.marching_cubes_lewiner(p, level=0)
     print('|-> Ended marching cubes algorithm of patient {}'.format(patient))
 
     fig = plt.figure(figsize=(8, 8))
