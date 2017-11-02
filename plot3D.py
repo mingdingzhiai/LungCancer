@@ -62,7 +62,7 @@ def getBinary(patient) :
 # Binary plot of 3d object
 def binaryPlot3D(img) :
     
-    p = image.transpose(2,1,0)
+    p = img.transpose(2,1,0)
     p = p[:,:,::-1]
     
     verts, faces = measure.marching_cubes(p, level=0)
