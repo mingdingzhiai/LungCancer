@@ -31,7 +31,7 @@ def plot3D(patient, threshold=400) :
     p = image.transpose(2,1,0)
     p = p[:,:,::-1]
     
-    verts, faces, _, _ = measure.marching_cubes_classic(p, threshold)
+    verts, faces, _, _ = measure.marching_cubes_lewiner(p, level=threshold)
 
     fig = plt.figure(figsize=(10, 10))
     ax = fig.add_subplot(111, projection='3d')
