@@ -62,7 +62,7 @@ def displayScan(patient, slices, colormap) :
     plt.show
 
 # Thresholder tool
-def treshold(x, down, up) :
+def tresh(x, down, up) :
 
     if x < down or x > up : return 0
     else : return x
@@ -79,8 +79,8 @@ def getSobolImage(img) :
     thresh = np.vectorize(tresh)
     binar = np.vectorize(binarize)
     
-    dx = ndimage.sobel(img - threshold(img, 0, 1200), 1) 
-    dy = ndimage.sobel(img - threshold(img, 0, 1200), 0)
+    dx = ndimage.sobel(img - thresh(img, 0, 1200), 1) 
+    dy = ndimage.sobel(img - thresh(img, 0, 1200), 0)
     sImage = np.hypot(dx, dy)  
     sImage *= 255.0 / np.max(sImage) 
     g1 = threshold_otsu(sImage)
@@ -95,7 +95,7 @@ def getLaplacianImage(img) :
     binar = np.vectorize(binarize)
     thresh = np.vectorize(tresh)
     
-    lImage = threshold(img, -1200, -800)
+    lImage = thresh(img, -1200, -800)
     g2 = threshold_otsu(lImage)
     lImage = lImage > g2
     lImage = binarize(lImage)
