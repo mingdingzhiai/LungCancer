@@ -85,7 +85,7 @@ def getSobolImage(img) :
     sImage *= 255.0 / np.max(sImage) 
     g1 = threshold_otsu(sImage)
     sImage = sImage > g1
-    sImage = binarize(sImage)
+    sImage = binar(sImage)
     
     return sImage  
 
@@ -98,7 +98,7 @@ def getLaplacianImage(img) :
     lImage = thresh(img, -1200, -800)
     g2 = threshold_otsu(lImage)
     lImage = lImage > g2
-    lImage = binarize(lImage)
+    lImage = binar(lImage)
     
     return lImage
 
