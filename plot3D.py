@@ -60,7 +60,7 @@ def getBinary(patient) :
     return image
 
 # Binary plot of 3d object
-def binaryPlot3D(img) :
+def binaryPlot3D(img, alpha=0.05) :
     
     p = img.transpose(2,1,0)
     p = p[:,:,::-1]
@@ -70,7 +70,6 @@ def binaryPlot3D(img) :
     fig = plt.figure(figsize=(8, 8))
     ax = fig.add_subplot(111, projection='3d')
     # Alpha on the mesh will put edges transparent
-    alpha = 0.005
     mesh = Poly3DCollection(verts[faces], alpha=alpha)
     # mesh = Poly3DCollection(verts[faces], alpha=alpha)
     # Alpha on the facecolor will turn the faces transparent
