@@ -69,11 +69,12 @@ def binaryPlot3D(img) :
 
     fig = plt.figure(figsize=(8, 8))
     ax = fig.add_subplot(111, projection='3d')
-    alpha = 0.005
     # Alpha on the mesh will put edges transparent
+    alpha = 0.005
     mesh = Poly3DCollection(verts[faces], alpha=alpha)
+    # mesh = Poly3DCollection(verts[faces], alpha=alpha)
     # Alpha on the facecolor will turn the faces transparent
-    mesh.set_facecolor((0.2, 0.2, 0.2, alpha))
+    # mesh.set_facecolor((0.2, 0.2, 0.2, alpha))
     ax.add_collection3d(mesh)
     ax.set_xlim(0, p.shape[0])
     ax.set_ylim(0, p.shape[1])
