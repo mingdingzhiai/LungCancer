@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Fri Jan 13 16:34:51 2017
-
-@author: Dindin Meryll
-"""
-
 from imports import *
 
 # Defines a way to load the scans relative to a patient

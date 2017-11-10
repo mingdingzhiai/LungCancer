@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Nov 01 16:34:51 2017
-
-@author: Dindin Meryll
-"""
-
 import dicom
 import copy
 import os
